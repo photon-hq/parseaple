@@ -1,3 +1,3 @@
-export {TypedStreamReader} from './stream';
-export {Unarchiver} from './archiver';
-export * from './types/foundation';
+export { Unarchiver } from "./archiver";
+export { TypedStreamReader } from "./stream";
+export * from "./types/foundation";
