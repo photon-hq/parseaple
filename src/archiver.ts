@@ -1,8 +1,7 @@
-import { AssertionError } from "assert";
+import { AssertionError } from "node:assert";
 import {
 	allEncodingsMatchExpected,
 	buildArrayEncoding,
-	buildStructEncoding,
 	parseArrayEncoding,
 	parseStructEncoding,
 } from "./encodings";
@@ -19,7 +18,6 @@ import {
 	EndStruct,
 	EndTypedValues,
 	ObjectReference,
-	ReadEvent,
 	Selector,
 	SingleClass,
 	TypedStreamReader,
@@ -27,16 +25,46 @@ import {
 import {
 	archivedClassesByName,
 	type KnownArchivedObject,
+	type KnownStruct,
 	structClassesByEncoding,
 } from "./types/known_types";
 // import all objc classes to register them
 import "./types/foundation";
 import { BPlistReader } from "./bplist";
 
+type StreamEvent =
+	| Atom
+	| BeginArray
+	| BeginObject
+	| BeginStruct
+	| BeginTypedValues
+	| ByteArray
+	| CString
+	| EndArray
+	| EndObject
+	| EndStruct
+	| EndTypedValues
+	| ObjectReference
+	| Selector
+	| SingleClass;
+
+export type ArchivedValue =
+	| null
+	| undefined
+	| number
+	| string
+	| Buffer
+	| CClass
+	| CArray
+	| GenericArchivedObject
+	| KnownArchivedObject
+	| GenericStruct
+	| KnownStruct;
+
 export class TypedGroup {
 	encodings: Array<string>;
-	values: Array<any>;
-	constructor(encodings: Array<string>, values: Array<any>) {
+	values: Array<ArchivedValue>;
+	constructor(encodings: Array<string>, values: Array<ArchivedValue>) {
 		this.encodings = encodings;
 		this.values = values;
 	}
@@ -46,27 +74,26 @@ export class TypedValue extends TypedGroup {
 	get encoding(): string {
 		return this.encodings[0];
 	}
-	get value(): any {
+	get value(): ArchivedValue {
 		return this.values[0];
 	}
-	constructor(encoding: string, value: any) {
+	constructor(encoding: string, value: ArchivedValue) {
 		super([encoding], [value]);
 	}
 }
 
 export class CArray {
-	elements: Array<any>;
-	constructor(elements: Array<any>) {
+	elements: Array<ArchivedValue>;
+	constructor(elements: Array<ArchivedValue>) {
 		this.elements = elements;
-		const test = TypedValue;
 	}
 }
 
 export class CClass {
 	name: string;
 	version: number;
-	superclass?: any;
-	constructor(name: string, version: number, superclass?: any) {
+	superclass?: CClass;
+	constructor(name: string, version: number, superclass?: CClass) {
 		this.name = name;
 		this.version = version;
 		this.superclass = superclass;
@@ -82,10 +109,10 @@ export class GenericArchivedObject {
 	}
 }
 
-class GenericStruct {
+export class GenericStruct {
 	name?: string;
-	fields: any[];
-	constructor(fields: any[], name?: string) {
+	fields: ArchivedValue[];
+	constructor(fields: ArchivedValue[], name?: string) {
 		this.name = name;
 		this.fields = fields;
 	}
@@ -96,7 +123,7 @@ class NO_LOOKAHEAD {}
 export class Unarchiver {
 	reader: TypedStreamReader | BPlistReader;
 	binaryDecoding: Unarchiver.BinaryDecoding;
-	private sharedObjectTable: Array<[ObjectReference.Type, any]> = [];
+	private sharedObjectTable: Array<[ObjectReference.Type, ArchivedValue]> = [];
 
 	constructor(
 		reader: TypedStreamReader | BPlistReader,
@@ -110,22 +137,22 @@ export class Unarchiver {
 		data: Buffer,
 		binaryDecoding = Unarchiver.BinaryDecoding.all,
 	): Unarchiver {
-		let reader;
 		try {
-			reader = new TypedStreamReader(data);
-		} catch (e: any) {
-			if (e.constructor.name == "InvalidTypedStreamError") {
-				reader = new BPlistReader(data);
-			} else {
-				throw e;
+			return new Unarchiver(new TypedStreamReader(data), binaryDecoding);
+		} catch (e: unknown) {
+			if (
+				e instanceof Error &&
+				e.constructor.name === "InvalidTypedStreamError"
+			) {
+				return new Unarchiver(new BPlistReader(data), binaryDecoding);
 			}
+			throw e;
 		}
-		return new Unarchiver(reader, binaryDecoding);
 	}
 
-	private lookupReference(ref: ObjectReference) {
+	private lookupReference(ref: ObjectReference): ArchivedValue {
 		const [refType, obj] = this.sharedObjectTable[ref.number];
-		if (ref.referencedType != refType) {
+		if (ref.referencedType !== refType) {
 			throw new EvalError(
 				`Object reference type mismatch: reference should point to an object of type ${ref.referencedType}`,
 			);
@@ -133,7 +160,7 @@ export class Unarchiver {
 		return obj;
 	}
 
-	decodeAnyUntypedValue(expectedEncoding: string): any {
+	decodeAnyUntypedValue(expectedEncoding: string): ArchivedValue {
 		if (this.reader instanceof BPlistReader) {
 			throw new Error("Operation not supported for datatype bplist");
 		}
@@ -144,7 +171,7 @@ export class Unarchiver {
 			["number", "string"].includes(typeof first) ||
 			first instanceof Buffer
 		) {
-			return first;
+			return first as null | number | string | Buffer;
 		} else if (first instanceof ObjectReference) {
 			return this.lookupReference(first);
 		} else if (first instanceof CString) {
@@ -162,7 +189,7 @@ export class Unarchiver {
 			const singleClasses = [first];
 			let nextClassEvent = this.reader.next().value;
 			while (
-				nextClassEvent != undefined &&
+				nextClassEvent !== undefined &&
 				!(nextClassEvent instanceof ObjectReference)
 			) {
 				if (!(nextClassEvent instanceof SingleClass)) {
@@ -176,11 +203,13 @@ export class Unarchiver {
 
 			// Resolve the possibly Nil superclass of the last literally stored class.
 			const terminatingEvent = nextClassEvent;
-			let nextSuperclass;
+			let nextSuperclass: CClass | undefined;
 			if (terminatingEvent == null) {
 				nextSuperclass = undefined;
 			} else if (terminatingEvent instanceof ObjectReference) {
-				nextSuperclass = this.lookupReference(terminatingEvent);
+				nextSuperclass = this.lookupReference(terminatingEvent) as
+					| CClass
+					| undefined;
 			} else {
 				throw new AssertionError();
 			}
@@ -210,7 +239,9 @@ export class Unarchiver {
 				this.sharedObjectTable.push([ObjectReference.Type.CLASS, newClass]);
 			}
 
-			return nextSuperclass;
+			const result = newClasses.at(0);
+			if (result == null) throw new AssertionError();
+			return result;
 		} else if (first instanceof BeginObject) {
 			// The object's number is assigned *before* its class information is read,
 			// but at this point we can't create the object yet
@@ -255,11 +286,11 @@ export class Unarchiver {
 					nextEvent = this.reader.next().value;
 				}
 			} else {
-				if (!archivedClassesByName.get(archivedClass.name)!.consumeEnd) {
+				if (!archivedClassesByName.get(archivedClass.name)?.consumeEnd) {
 					const end = this.reader.next().value;
 					if (!(end instanceof EndObject)) {
 						throw new EvalError(
-							`Expected EndObject, not ${end!.constructor.name}`,
+							`Expected EndObject, not ${end?.constructor.name}`,
 						);
 					}
 				}
@@ -311,23 +342,25 @@ export class Unarchiver {
 		}
 	}
 
-	decodeTypedValues(lookahead: any = NO_LOOKAHEAD) {
+	decodeTypedValues(
+		lookahead: NO_LOOKAHEAD | StreamEvent = new NO_LOOKAHEAD(),
+	) {
 		if (this.reader instanceof BPlistReader) {
 			throw new Error("Operation not supported for datatype bplist");
 		}
 		const begin =
-			lookahead == NO_LOOKAHEAD ? this.reader.next().value : lookahead;
+			lookahead instanceof NO_LOOKAHEAD ? this.reader.next().value : lookahead;
 
 		if (!(begin instanceof BeginTypedValues)) {
 			throw new EvalError(
-				`Expected BeginTypeValues, not ${begin!.constructor.name}`,
+				`Expected BeginTypeValues, not ${begin?.constructor.name}`,
 			);
 		}
 
 		// Single typed values are quite common,
 		// so use a special subclass that's more convenient to use.
 		const ret: TypedGroup =
-			begin.encodings.length == 1
+			begin.encodings.length === 1
 				? new TypedValue(
 						begin.encodings[0],
 						this.decodeAnyUntypedValue(begin.encodings[0]),
@@ -345,8 +378,8 @@ export class Unarchiver {
 		return ret;
 	}
 
-	decodeValuesOfTypes(typeEncodings: string[]): any {
-		if (typeEncodings.length == 0) {
+	decodeValuesOfTypes(typeEncodings: string[]): ArchivedValue[] {
+		if (typeEncodings.length === 0) {
 			throw new TypeError("Expected at least one type encoding");
 		}
 
@@ -368,12 +401,12 @@ export class Unarchiver {
 	decodeArray(elementTypeEncoding: string, length: number): CArray {
 		return this.decodeValueOfType(
 			buildArrayEncoding(length, elementTypeEncoding),
-		);
+		) as CArray;
 	}
 
 	decodeDataObject() {
 		const length = this.decodeValueOfType("i");
-		if (length < 0) {
+		if (typeof length !== "number" || length < 0) {
 			throw new EvalError(`Data object length cannot be negative: ${length}`);
 		}
 		const dataArray = this.decodeArray("c", length);
@@ -402,7 +435,7 @@ export class Unarchiver {
 	decodeSingleRoot() {
 		const values = this.decodeAll();
 
-		if (values.length == 0) {
+		if (values.length === 0) {
 			throw new EvalError("Archive contains no values");
 		} else if (values.length > 1) {
 			throw new EvalError(
@@ -414,7 +447,7 @@ export class Unarchiver {
 				return rootGroup.value;
 			}
 			throw new EvalError(
-				`Archive's root value is a group of ${rootGroup.values.length} values (expected exactly one root value`,
+				`Archive's root value is a group of ${rootGroup.values.length} values (expected exactly one root value)`,
 			);
 		}
 	}

@@ -19,21 +19,6 @@ const SIGNATURE_TO_BYTE_ORDER_MAP: Record<string, "BE" | "LE"> = {
 	streamtyped: "LE",
 };
 
-// These values are taken from the NXSYSTEMVERSION constants
-// from typedstream.h from an early (Darwin 0.1) version of the Objective-C runtime:
-// https://sourceforge.net/projects/aapl-darwin/files/Darwin-0.1/objc-1.tar.gz/download
-// These appear to correspond to early NeXTSTEP version numbers (0.8.x, 0.9.x).
-const SYSTEM_VERSION_NEXTSTEP_082 = 82;
-const SYSTEM_VERSION_NEXTSTEP_083 = 83;
-const SYSTEM_VERSION_NEXTSTEP_090 = 90;
-const SYSTEM_VERSION_NEXTSTEP_0900 = 900;
-const SYSTEM_VERSION_NEXTSTEP_0901 = 901;
-const SYSTEM_VERSION_NEXTSTEP_0905 = 905;
-const SYSTEM_VERSION_NEXTSTEP_0930 = 930;
-// This is the system version used by all versions of Mac OS X since at least 10.4
-// (and probably earlier - if the numbering scheme is to be trusted, probably since NeXTSTEP 1.0).
-const SYSTEM_VERSION_MAC_OS_X = 1000;
-
 // In the original Darwin code,
 // the term "label" is used ambiguously -
 // both for the static integer constants listed below,
@@ -355,13 +340,13 @@ export class TypedStreamReader implements Iterator<ReadEvent> {
 			throw new InvalidTypedStreamError(
 				`Invalid streamer version: ${this.streamerVersion}`,
 			);
-		} else if (this.streamerVersion == STREAMER_VERSION_OLD_NEXTSTEP) {
+		} else if (this.streamerVersion === STREAMER_VERSION_OLD_NEXTSTEP) {
 			throw new InvalidTypedStreamError(
 				`Old NeXTSTEP streamer version (${this.streamerVersion}) not supported (yet?)`,
 			);
 		}
 
-		if (signatureLength != SIGNATURE_LENGTH) {
+		if (signatureLength !== SIGNATURE_LENGTH) {
 			throw new InvalidTypedStreamError(
 				`The signature string must be exactly ${SIGNATURE_LENGTH} bytes long, not ${signatureLength}`,
 			);
@@ -389,7 +374,8 @@ export class TypedStreamReader implements Iterator<ReadEvent> {
 	 * (i. e. if EOF was hit prematurely).
 	 */
 	private readExact(byteCount: number) {
-		return this.data.subarray(this.pos, (this.pos += byteCount));
+		const end = this.pos + byteCount;
+		return this.data.subarray(this.pos, end);
 	}
 
 	/**
@@ -429,8 +415,8 @@ export class TypedStreamReader implements Iterator<ReadEvent> {
 			} else {
 				return head & 0xff;
 			}
-		} else if (head == TAG_INTEGER_2) {
-			if (this.byteOrder == "LE") {
+		} else if (head === TAG_INTEGER_2) {
+			if (this.byteOrder === "LE") {
 				if (signed) {
 					return this.readExact(2).readInt16LE();
 				} else {
@@ -443,8 +429,8 @@ export class TypedStreamReader implements Iterator<ReadEvent> {
 					return this.readExact(2).readUint16BE();
 				}
 			}
-		} else if (head == TAG_INTEGER_4) {
-			if (this.byteOrder == "LE") {
+		} else if (head === TAG_INTEGER_4) {
+			if (this.byteOrder === "LE") {
 				if (signed) {
 					return this.readExact(2).readInt32LE();
 				} else {
@@ -473,8 +459,8 @@ export class TypedStreamReader implements Iterator<ReadEvent> {
 	 */
 	private readFloat(head?: number): number {
 		head = this.readHeadByte(head);
-		if (head == TAG_FLOATING_POINT) {
-			if (this.byteOrder == "LE") {
+		if (head === TAG_FLOATING_POINT) {
+			if (this.byteOrder === "LE") {
 				return this.readExact(4).readFloatLE();
 			} else {
 				return this.readExact(4).readFloatBE();
@@ -493,10 +479,11 @@ export class TypedStreamReader implements Iterator<ReadEvent> {
 	 */
 	private readDouble(head?: number): number {
 		head = this.readHeadByte(head);
-		if (head == TAG_FLOATING_POINT) {
-			if (this.byteOrder == "LE") {
-				return this.readExact(8).readDoubleBE();
+		if (head === TAG_FLOATING_POINT) {
+			if (this.byteOrder === "LE") {
+				return this.readExact(8).readDoubleLE();
 			} else {
+				// TODO: should thiz be readDoubleBE() instead?
 				return this.readExact(8).readDoubleLE();
 			}
 		} else {
@@ -517,7 +504,7 @@ export class TypedStreamReader implements Iterator<ReadEvent> {
 	 */
 	private readUnsharedString(head?: number): Buffer | undefined {
 		head = this.readHeadByte(head);
-		if (head == TAG_NIL) {
+		if (head === TAG_NIL) {
 			return undefined;
 		}
 		const length = this.readInteger(false, head);
@@ -540,9 +527,9 @@ export class TypedStreamReader implements Iterator<ReadEvent> {
 	 */
 	private readSharedString(head?: number): Buffer | undefined {
 		head = this.readHeadByte(head);
-		if (head == TAG_NIL) {
+		if (head === TAG_NIL) {
 			return undefined;
-		} else if (head == TAG_NEW) {
+		} else if (head === TAG_NEW) {
 			const string = this.readUnsharedString();
 			if (string == null) {
 				throw new InvalidTypedStreamError(
@@ -598,9 +585,9 @@ export class TypedStreamReader implements Iterator<ReadEvent> {
 	 */
 	private readCString(head?: number): CString | ObjectReference | undefined {
 		head = this.readHeadByte(head);
-		if (head == TAG_NIL) {
+		if (head === TAG_NIL) {
 			return undefined;
-		} else if (head == TAG_NEW) {
+		} else if (head === TAG_NEW) {
 			const string = this.readSharedString();
 			if (string == null) {
 				throw new InvalidTypedStreamError(
@@ -625,7 +612,7 @@ export class TypedStreamReader implements Iterator<ReadEvent> {
 		head?: number,
 	): Generator<SingleClass | ObjectReference | undefined> {
 		head = this.readHeadByte(head);
-		while (head == TAG_NEW) {
+		while (head === TAG_NEW) {
 			const name = this.readSharedString();
 			if (name == null) {
 				throw new InvalidTypedStreamError("Class name cannot be nil");
@@ -635,7 +622,7 @@ export class TypedStreamReader implements Iterator<ReadEvent> {
 			head = this.readHeadByte();
 		}
 
-		if (head == TAG_NIL) {
+		if (head === TAG_NIL) {
 			yield undefined;
 		} else {
 			yield this.readObjectReference(ObjectReference.Type.CLASS, head);
@@ -653,13 +640,13 @@ export class TypedStreamReader implements Iterator<ReadEvent> {
 	 */
 	private *readObject(head?: number): Generator<ReadEvent | undefined> {
 		head = this.readHeadByte(head);
-		if (head == TAG_NIL) {
+		if (head === TAG_NIL) {
 			yield undefined;
-		} else if (head == TAG_NEW) {
+		} else if (head === TAG_NEW) {
 			yield new BeginObject();
 			yield* this.readClass();
 			let nextHead = this.readHeadByte();
-			while (nextHead != TAG_END_OF_OBJECT) {
+			while (nextHead !== TAG_END_OF_OBJECT) {
 				yield* this.readTypedValues(nextHead);
 				nextHead = this.readHeadByte();
 			}
@@ -690,31 +677,31 @@ export class TypedStreamReader implements Iterator<ReadEvent> {
 		// Unlike other integer types,
 		// chars are always stored literally -
 		// the usual tags do not apply.
-		if (typeEncoding == "C") {
+		if (typeEncoding === "C") {
 			yield this.readExact(1).readUInt8();
-		} else if (typeEncoding == "c") {
+		} else if (typeEncoding === "c") {
 			yield this.readExact(1).readInt8();
 		} else if (["S", "I", "L", "Q"].includes(typeEncoding)) {
 			yield this.readInteger(false, head);
 		} else if (["s", "i", "l", "q"].includes(typeEncoding)) {
 			yield this.readInteger(true, head);
-		} else if (typeEncoding == "f") {
+		} else if (typeEncoding === "f") {
 			yield this.readFloat(head);
-		} else if (typeEncoding == "d") {
+		} else if (typeEncoding === "d") {
 			yield this.readDouble(head);
-		} else if (typeEncoding == "*") {
+		} else if (typeEncoding === "*") {
 			yield this.readCString(head);
-		} else if (typeEncoding == "%") {
+		} else if (typeEncoding === "%") {
 			yield new Atom(this.readSharedString(head));
-		} else if (typeEncoding == ":") {
+		} else if (typeEncoding === ":") {
 			yield new Selector(this.readSharedString(head));
-		} else if (typeEncoding == "+") {
+		} else if (typeEncoding === "+") {
 			yield this.readUnsharedString(head);
-		} else if (typeEncoding == "#") {
+		} else if (typeEncoding === "#") {
 			yield* this.readClass(head);
-		} else if (typeEncoding == "@") {
+		} else if (typeEncoding === "@") {
 			yield* this.readObject(head);
-		} else if (typeEncoding == "!") {
+		} else if (typeEncoding === "!") {
 			// "!" stands for an int-sized field that should be ignored when (un)archiving.
 			// The "!" *type* is stored in the typedstream when encoding and is expected to be present when decoding,
 			// but no actual data is written or read.
@@ -774,7 +761,7 @@ export class TypedStreamReader implements Iterator<ReadEvent> {
 		} catch (e) {
 			if (
 				e instanceof RangeError &&
-				e.message == "Attempt to access memory outside buffer bounds" &&
+				e.message === "Attempt to access memory outside buffer bounds" &&
 				endOfStreamOk
 			) {
 				throw new EOFError(this.EOF_MESSAGE);

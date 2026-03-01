@@ -179,7 +179,9 @@ export function encodingMatchesExpected(
 			fieldTypeEncodings: expectedFieldTypeEncodings,
 		} = parseStructEncoding(expectedEncoding);
 		return (
-			(actualName === null || actualName === "?" || actualName === expectedName) &&
+			(actualName === null ||
+				actualName === "?" ||
+				actualName === expectedName) &&
 			allEncodingsMatchExpected(
 				actualFieldTypeEncodings,
 				expectedFieldTypeEncodings,

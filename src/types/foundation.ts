@@ -1,13 +1,13 @@
-import { type CClass, Unarchiver } from "../archiver";
+import { type ArchivedValue, type CClass, Unarchiver } from "../archiver";
 import { archivedClass, KnownArchivedObject } from "./known_types";
 
 @archivedClass("NSObject")
 export class NSObject extends KnownArchivedObject {
 	static override initFromUnarchiver(
-		unarchiver: Unarchiver,
+		_unarchiver: Unarchiver,
 		archivedClass: CClass,
 	): NSObject {
-		if (archivedClass.version != 0) {
+		if (archivedClass.version !== 0) {
 			throw new EvalError(`Unsupported version: ${archivedClass.version}`);
 		}
 		return new NSObject();
@@ -18,18 +18,18 @@ export class NSObject extends KnownArchivedObject {
 export class NSData extends NSObject {
 	//TODO
 	data: Buffer;
-	constructor(data?: any) {
+	constructor(data: Buffer) {
 		super();
-		this.data = data!;
+		this.data = data;
 	}
 	static override initFromUnarchiver(
 		unarchiver: Unarchiver,
 		archivedClass: CClass,
 	): NSData {
-		if (archivedClass.version != 0) {
+		if (archivedClass.version !== 0) {
 			throw new EvalError(`Unsupported version: ${archivedClass.version}`);
 		}
-		return new NSData(Buffer.from(unarchiver.decodeDataObject()));
+		return new NSData(Buffer.from(unarchiver.decodeDataObject() as number[]));
 	}
 }
 
@@ -39,10 +39,12 @@ export class NSMutableData extends NSData {
 		unarchiver: Unarchiver,
 		archivedClass: CClass,
 	): NSMutableData {
-		if (archivedClass.version != 0) {
+		if (archivedClass.version !== 0) {
 			throw new EvalError(`Unsupported version: ${archivedClass.version}`);
 		}
-		return new NSMutableData(unarchiver.decodeDataObject());
+		return new NSMutableData(
+			Buffer.from(unarchiver.decodeDataObject() as number[]),
+		);
 	}
 }
 
@@ -55,36 +57,38 @@ export class NSDate extends NSObject {
 			NSDate.ABSOLUTE_REFERENCE_DATA + 1000 * this.absoluteReferenceDateOffset,
 		);
 	}
-	constructor(absoluteReferenceDateOffset?: number) {
+	constructor(absoluteReferenceDateOffset: number) {
 		super();
-		this.absoluteReferenceDateOffset = absoluteReferenceDateOffset!;
+		this.absoluteReferenceDateOffset = absoluteReferenceDateOffset;
 	}
 	static override initFromUnarchiver(
 		unarchiver: Unarchiver,
 		archivedClass: CClass,
 	): NSDate {
-		if (archivedClass.version != 0) {
+		if (archivedClass.version !== 0) {
 			throw new EvalError(`Unsupported version: ${archivedClass.version}`);
 		}
-		return new NSDate(unarchiver.decodeValueOfType("d"));
+		return new NSDate(unarchiver.decodeValueOfType("d") as number);
 	}
 }
 
 @archivedClass("NSString")
 export class NSString extends NSObject {
 	string: string;
-	constructor(value?: string) {
+	constructor(value: string) {
 		super();
-		this.string = value!;
+		this.string = value;
 	}
 	static override initFromUnarchiver(
 		unarchiver: Unarchiver,
 		archivedClass: CClass,
 	): NSString {
-		if (archivedClass.version != 1) {
+		if (archivedClass.version !== 1) {
 			throw new EvalError(`Unsupported version: ${archivedClass.version}`);
 		}
-		return new NSString(unarchiver.decodeValueOfType("+").toString("utf8"));
+		return new NSString(
+			(unarchiver.decodeValueOfType("+") as Buffer).toString("utf8"),
+		);
 	}
 }
 
@@ -94,11 +98,11 @@ export class NSMutableString extends NSString {
 		unarchiver: Unarchiver,
 		archivedClass: CClass,
 	): NSMutableString {
-		if (archivedClass.version != 1) {
+		if (archivedClass.version !== 1) {
 			throw new EvalError(`Unsupported version: ${archivedClass.version}`);
 		}
 		return new NSMutableString(
-			unarchiver.decodeValueOfType("+").toString("utf8"),
+			(unarchiver.decodeValueOfType("+") as Buffer).toString("utf8"),
 		);
 	}
 }
@@ -106,37 +110,41 @@ export class NSMutableString extends NSString {
 @archivedClass("NSAttributedString")
 export class NSAttributedString extends NSString {
 	runs: NSAttribute[];
-	constructor(value?: string, runs?: NSAttribute[]) {
-		super();
-		this.string = value!;
-		this.runs = runs!;
+	constructor(value: string, runs: NSAttribute[]) {
+		super(value);
+		this.runs = runs;
 	}
 	protected static readString(unarchiver: Unarchiver) {
-		return unarchiver.decodeTypedValues().values[0].string;
+		return (unarchiver.decodeTypedValues().values[0] as NSString).string;
 	}
 	protected static readRange(unarchiver: Unarchiver) {
 		const range = unarchiver.decodeTypedValues();
 		return {
-			reference: range.values[0],
-			length: range.values[1],
+			reference: range.values[0] as number,
+			length: range.values[1] as number,
 		};
 	}
 	protected static readAttributeValue(unarchiver: Unarchiver) {
-		const dict = unarchiver.decodeTypedValues().values[0].contents;
+		const dict = (
+			unarchiver.decodeTypedValues().values[0] as NSDictionary<
+				NSString,
+				ArchivedValue
+			>
+		).contents;
 		const attributeValue: NSAttributeValue = {};
 		for (const [key, value] of dict.entries()) {
 			if (value instanceof NSData) {
-				if (unarchiver.binaryDecoding != Unarchiver.BinaryDecoding.none) {
+				if (unarchiver.binaryDecoding !== Unarchiver.BinaryDecoding.none) {
 					const data = value.data;
 					try {
 						const decoded = Unarchiver.open(data).decodeAll();
-						if (decoded.length == 1) {
+						if (decoded.length === 1) {
 							attributeValue[key.string] = decoded[0];
 						} else {
 							attributeValue[key.string] = decoded;
 						}
-					} catch (e) {
-						if (unarchiver.binaryDecoding == Unarchiver.BinaryDecoding.all) {
+					} catch {
+						if (unarchiver.binaryDecoding === Unarchiver.BinaryDecoding.all) {
 							attributeValue[key.string] = data;
 						}
 					}
@@ -144,7 +152,7 @@ export class NSAttributedString extends NSString {
 			} else if (value instanceof NSString) {
 				attributeValue[key.string] = value.string;
 			} else {
-				attributeValue[key.string] = value.value;
+				attributeValue[key.string] = (value as NSValue).value;
 			}
 		}
 		return attributeValue;
@@ -175,7 +183,7 @@ export class NSAttributedString extends NSString {
 		unarchiver: Unarchiver,
 		archivedClass: CClass,
 	): NSAttributedString {
-		if (archivedClass.version != 0) {
+		if (archivedClass.version !== 0) {
 			throw new EvalError(`Unsupported version: ${archivedClass.version}`);
 		}
 		const value = NSAttributedString.readString(unarchiver);
@@ -192,7 +200,7 @@ export class NSMutableAttributedString extends NSAttributedString {
 		unarchiver: Unarchiver,
 		archivedClass: CClass,
 	): NSMutableAttributedString {
-		if (archivedClass.version != 0) {
+		if (archivedClass.version !== 0) {
 			throw new EvalError(`Unsupported version: ${archivedClass.version}`);
 		}
 		const value = NSMutableAttributedString.readString(unarchiver);
@@ -204,7 +212,7 @@ export class NSMutableAttributedString extends NSAttributedString {
 }
 
 interface NSAttributeValue {
-	[key: string]: any;
+	[key: string]: unknown;
 }
 
 interface NSAttribute {
@@ -215,20 +223,20 @@ interface NSAttribute {
 @archivedClass("NSValue")
 export class NSValue extends NSObject {
 	typeEncoding: string;
-	value: any;
-	constructor(typeEncoding?: string, value?: any) {
+	value: ArchivedValue;
+	constructor(typeEncoding: string, value: ArchivedValue) {
 		super();
-		this.typeEncoding = typeEncoding!;
-		this.value = value!;
+		this.typeEncoding = typeEncoding;
+		this.value = value;
 	}
 	static override initFromUnarchiver(
 		unarchiver: Unarchiver,
 		archivedClass: CClass,
 	): NSValue {
-		if (archivedClass.version != 0) {
+		if (archivedClass.version !== 0) {
 			throw new EvalError(`Unsupported version: ${archivedClass.version}`);
 		}
-		const typeEncoding = unarchiver.decodeValueOfType("*");
+		const typeEncoding = unarchiver.decodeValueOfType("*") as string;
 		const value = unarchiver.decodeValueOfType(typeEncoding);
 		return new NSValue(typeEncoding, value);
 	}
@@ -240,10 +248,10 @@ export class NSNumber extends NSValue {
 		unarchiver: Unarchiver,
 		archivedClass: CClass,
 	): NSNumber {
-		if (archivedClass.version != 0) {
+		if (archivedClass.version !== 0) {
 			throw new EvalError(`Unsupported version: ${archivedClass.version}`);
 		}
-		const typeEncoding = unarchiver.decodeValueOfType("*");
+		const typeEncoding = unarchiver.decodeValueOfType("*") as string;
 		const value = unarchiver.decodeValueOfType(typeEncoding);
 		return new NSNumber(typeEncoding, value);
 	}
@@ -252,18 +260,18 @@ export class NSNumber extends NSValue {
 @archivedClass("NSArray")
 export class NSArray<T> extends NSObject {
 	elements: T[];
-	constructor(elements?: T[]) {
+	constructor(elements: T[]) {
 		super();
-		this.elements = elements!;
+		this.elements = elements;
 	}
 	static override initFromUnarchiver(
 		unarchiver: Unarchiver,
 		archivedClass: CClass,
-	): NSArray<any> {
-		if (archivedClass.version != 0) {
+	): NSArray<ArchivedValue> {
+		if (archivedClass.version !== 0) {
 			throw new EvalError(`Unsupported version: ${archivedClass.version}`);
 		}
-		const count = unarchiver.decodeValueOfType("i");
+		const count = unarchiver.decodeValueOfType("i") as number;
 		if (count < 0) {
 			throw new EvalError(`NSArray element count cannot be negative: ${count}`);
 		}
@@ -280,11 +288,11 @@ export class NSMutableArray<T> extends NSArray<T> {
 	static override initFromUnarchiver(
 		unarchiver: Unarchiver,
 		archivedClass: CClass,
-	): NSMutableArray<any> {
-		if (archivedClass.version != 0) {
+	): NSMutableArray<ArchivedValue> {
+		if (archivedClass.version !== 0) {
 			throw new EvalError(`Unsupported version: ${archivedClass.version}`);
 		}
-		const count = unarchiver.decodeValueOfType("i");
+		const count = unarchiver.decodeValueOfType("i") as number;
 		if (count < 0) {
 			throw new EvalError(
 				`NSMutableArray element count cannot be negative: ${count}`,
@@ -301,18 +309,18 @@ export class NSMutableArray<T> extends NSArray<T> {
 @archivedClass("NSSet")
 export class NSSet<T> extends NSObject {
 	elements: T[];
-	constructor(elements?: T[]) {
+	constructor(elements: T[]) {
 		super();
-		this.elements = elements!;
+		this.elements = elements;
 	}
 	static override initFromUnarchiver(
 		unarchiver: Unarchiver,
 		archivedClass: CClass,
-	): NSSet<any> {
-		if (archivedClass.version != 0) {
+	): NSSet<ArchivedValue> {
+		if (archivedClass.version !== 0) {
 			throw new EvalError(`Unsupported version: ${archivedClass.version}`);
 		}
-		const count = unarchiver.decodeValueOfType("I");
+		const count = unarchiver.decodeValueOfType("I") as number;
 		const elements = [];
 		for (let i = 0; i < count; i++) {
 			elements.push(unarchiver.decodeValueOfType("@"));
@@ -326,11 +334,11 @@ export class NSMutableSet<T> extends NSSet<T> {
 	static override initFromUnarchiver(
 		unarchiver: Unarchiver,
 		archivedClass: CClass,
-	): NSMutableSet<any> {
-		if (archivedClass.version != 0) {
+	): NSMutableSet<ArchivedValue> {
+		if (archivedClass.version !== 0) {
 			throw new EvalError(`Unsupported version: ${archivedClass.version}`);
 		}
-		const count = unarchiver.decodeValueOfType("I");
+		const count = unarchiver.decodeValueOfType("I") as number;
 		const elements = [];
 		for (let i = 0; i < count; i++) {
 			elements.push(unarchiver.decodeValueOfType("@"));
@@ -342,24 +350,24 @@ export class NSMutableSet<T> extends NSSet<T> {
 @archivedClass("NSDictionary")
 export class NSDictionary<K, V> extends NSObject {
 	contents: Map<K, V>;
-	constructor(contents?: Map<K, V>) {
+	constructor(contents: Map<K, V>) {
 		super();
-		this.contents = contents!;
+		this.contents = contents;
 	}
 	static override initFromUnarchiver(
 		unarchiver: Unarchiver,
 		archivedClass: CClass,
-	): NSDictionary<any, any> {
-		if (archivedClass.version != 0) {
+	): NSDictionary<ArchivedValue, ArchivedValue> {
+		if (archivedClass.version !== 0) {
 			throw new EvalError(`Unsupported version: ${archivedClass.version}`);
 		}
-		const count = unarchiver.decodeValueOfType("i");
+		const count = unarchiver.decodeValueOfType("i") as number;
 		if (count < 0) {
 			throw new EvalError(
 				`NSDictionary element count cannot be negative: ${count}`,
 			);
 		}
-		const contents = new Map();
+		const contents = new Map<ArchivedValue, ArchivedValue>();
 		for (let i = 0; i < count; i++) {
 			const key = unarchiver.decodeValueOfType("@");
 			const value = unarchiver.decodeValueOfType("@");
@@ -374,17 +382,17 @@ export class NSMutableDictionary<K, V> extends NSDictionary<K, V> {
 	static override initFromUnarchiver(
 		unarchiver: Unarchiver,
 		archivedClass: CClass,
-	): NSMutableDictionary<any, any> {
-		if (archivedClass.version != 0) {
+	): NSMutableDictionary<ArchivedValue, ArchivedValue> {
+		if (archivedClass.version !== 0) {
 			throw new EvalError(`Unsupported version: ${archivedClass.version}`);
 		}
-		const count = unarchiver.decodeValueOfType("i");
+		const count = unarchiver.decodeValueOfType("i") as number;
 		if (count < 0) {
 			throw new EvalError(
 				`NSMutableDictionary element count cannot be negative: ${count}`,
 			);
 		}
-		const contents = new Map();
+		const contents = new Map<ArchivedValue, ArchivedValue>();
 		for (let i = 0; i < count; i++) {
 			const key = unarchiver.decodeValueOfType("@");
 			const value = unarchiver.decodeValueOfType("@");

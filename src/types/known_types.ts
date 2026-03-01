@@ -1,20 +1,26 @@
-import type { CClass, Unarchiver } from "../archiver";
+import type { ArchivedValue, CClass, Unarchiver } from "../archiver";
 import { buildStructEncoding } from "../encodings";
 
+// biome-ignore lint/complexity/noStaticOnlyClass: abstract base class used for instanceof checks
 export abstract class KnownArchivedObject {
 	static archivedName: string;
 	static consumeEnd: boolean;
 	static initFromUnarchiver(
-		unarchiver: Unarchiver,
-		archivedClass: CClass,
+		_unarchiver: Unarchiver,
+		_archivedClass: CClass,
 	): KnownArchivedObject {
 		throw new Error("Method not implemented");
 	}
 }
 
-export type KnownArchivedObjectDerived = {
-	new (): KnownArchivedObject;
-} & typeof KnownArchivedObject;
+export interface KnownArchivedObjectDerived {
+	archivedName: string;
+	consumeEnd: boolean;
+	initFromUnarchiver(
+		unarchiver: Unarchiver,
+		archivedClass: CClass,
+	): KnownArchivedObject;
+}
 export const archivedClassesByName = new Map<
 	string,
 	KnownArchivedObjectDerived
@@ -32,11 +38,11 @@ export abstract class KnownStruct {
 	static structName: string;
 	static fieldEncodings: string[];
 	static encoding: string;
-	protected constructor(fields: any[]) {}
+	protected constructor(_fields: ArchivedValue[]) {}
 }
 
 export type KnownStructDerived = {
-	new (fields: any[]): KnownStruct;
+	new (fields: ArchivedValue[]): KnownStruct;
 } & typeof KnownStruct;
 export const structClassesByEncoding = new Map<string, KnownStructDerived>();
 
