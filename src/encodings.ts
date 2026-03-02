@@ -47,7 +47,7 @@ function endOfEncoding(encoding: string, start: number) {
  * Split apart multiple type encodings contained in a single encoding string.
  * @param encodings
  */
-export function* splitEncodings(encodings: string) {
+export function* splitEncodings(encodings: string): Generator<string> {
 	let start = 0;
 	while (start < encodings.length) {
 		const end = endOfEncoding(encodings, start);

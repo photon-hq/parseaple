@@ -1,8 +1,7 @@
 {
-	"extends": "@tsconfig/node16/tsconfig.json",
 	"compilerOptions": {
-		"module": "commonjs",
-		"target": "ES2015",
+		"moduleResolution": "bundler",
+		"target": "esnext",
 		"declaration": true,
 		"outDir": "./dist",
 		"experimentalDecorators": true
