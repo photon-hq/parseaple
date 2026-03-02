@@ -132,8 +132,12 @@ export function parseStructEncoding(structEncoding: string) {
 		);
 	}
 
-	const end = structEncoding.indexOf("{", 1);
-	const equalsPos = structEncoding.substring(0, end).indexOf("=", 1);
+	// Find "=" for the struct name separator, searching only before any nested "{"
+	const firstNestedBrace = structEncoding.indexOf("{", 1);
+	const nameSearchEnd =
+		firstNestedBrace === -1 ? structEncoding.length - 1 : firstNestedBrace;
+	const equalsInRange = structEncoding.substring(1, nameSearchEnd).indexOf("=");
+	const equalsPos = equalsInRange === -1 ? -1 : equalsInRange + 1;
 
 	let name: string | undefined;
 	let fieldTypeEncodingString: string;

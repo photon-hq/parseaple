@@ -375,7 +375,9 @@ export class TypedStreamReader implements Iterator<ReadEvent> {
 	 */
 	private readExact(byteCount: number) {
 		const end = this.pos + byteCount;
-		return this.data.subarray(this.pos, end);
+		const result = this.data.subarray(this.pos, end);
+		this.pos = end;
+		return result;
 	}
 
 	/**
@@ -432,15 +434,15 @@ export class TypedStreamReader implements Iterator<ReadEvent> {
 		} else if (head === TAG_INTEGER_4) {
 			if (this.byteOrder === "LE") {
 				if (signed) {
-					return this.readExact(2).readInt32LE();
+					return this.readExact(4).readInt32LE();
 				} else {
-					return this.readExact(2).readUint32LE();
+					return this.readExact(4).readUint32LE();
 				}
 			} else {
 				if (signed) {
-					return this.readExact(2).readInt32BE();
+					return this.readExact(4).readInt32BE();
 				} else {
-					return this.readExact(2).readUint32BE();
+					return this.readExact(4).readUint32BE();
 				}
 			}
 		} else {
@@ -483,8 +485,7 @@ export class TypedStreamReader implements Iterator<ReadEvent> {
 			if (this.byteOrder === "LE") {
 				return this.readExact(8).readDoubleLE();
 			} else {
-				// TODO: should thiz be readDoubleBE() instead?
-				return this.readExact(8).readDoubleLE();
+				return this.readExact(8).readDoubleBE();
 			}
 		} else {
 			return this.readInteger(true, head);
@@ -677,7 +678,7 @@ export class TypedStreamReader implements Iterator<ReadEvent> {
 		// Unlike other integer types,
 		// chars are always stored literally -
 		// the usual tags do not apply.
-		if (typeEncoding === "C") {
+		if (typeEncoding === "C" || typeEncoding === "B") {
 			yield this.readExact(1).readUInt8();
 		} else if (typeEncoding === "c") {
 			yield this.readExact(1).readInt8();

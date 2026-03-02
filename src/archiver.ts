@@ -175,11 +175,12 @@ export class Unarchiver {
 		} else if (first instanceof ObjectReference) {
 			return this.lookupReference(first);
 		} else if (first instanceof CString) {
+			const str = first.contents.toString("ascii");
 			this.sharedObjectTable.push([
 				ObjectReference.Type.C_STRING,
-				first.contents,
+				str,
 			]);
-			return first.contents;
+			return str;
 		} else if (first instanceof Atom) {
 			return first.contents;
 		} else if (first instanceof Selector) {
