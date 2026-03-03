@@ -1,30 +1,19 @@
 {
-	"name": "typedstream",
-	"description": "A TypeScript parser for Apple's typedstream/NSArchiver binary format",
-	"author": {
-		"name": "qwerzl",
-		"email": "me@qwerzl.me"
-	},
-	"version": "2.0.0",
+	"name": "parseaple",
+	"private": true,
 	"type": "module",
-	"license": "MIT",
+	"workspaces": [
+		"packages/*"
+	],
+	"scripts": {
+		"build": "bun run --filter '*' build",
+		"test": "bun run --filter '*' test",
+		"check": "biome check",
+		"check:fix": "biome check --fix"
+	},
 	"devDependencies": {
 		"@biomejs/biome": "2.4.4",
 		"@types/node": "^18.7.1",
-		"ts-node": "^10.9.1",
-		"tsdown": "^0.21.0-beta.2",
-		"typescript": "^5.9.3",
-		"vitest": "^4.0.18"
-	},
-	"scripts": {
-		"start": "ts-node src/index.ts",
-		"build": "tsdown",
-		"test": "vitest run",
-		"test:watch": "vitest"
-	},
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
-	"dependencies": {
-		"bplist-parser": "^0.3.2"
+		"typescript": "^5.9.3"
 	}
 }

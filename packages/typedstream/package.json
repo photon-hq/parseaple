@@ -1,0 +1,29 @@
+{
+	"name": "typedstream",
+	"description": "A TypeScript parser for Apple's typedstream/NSArchiver binary format",
+	"author": {
+		"name": "qwerzl",
+		"email": "me@qwerzl.me"
+	},
+	"version": "2.0.0",
+	"type": "module",
+	"license": "MIT",
+	"scripts": {
+		"build": "tsdown",
+		"test": "vitest run",
+		"test:watch": "vitest"
+	},
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"files": [
+		"dist",
+		"README.md"
+	],
+	"dependencies": {
+		"bplist-parser": "^0.3.2"
+	},
+	"devDependencies": {
+		"tsdown": "^0.21.0-beta.2",
+		"vitest": "^4.0.18"
+	}
+}
