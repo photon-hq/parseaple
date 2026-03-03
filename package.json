@@ -1,11 +1,11 @@
 {
-	"name": "node-typedstream",
-	"description": "A Node-based parser for apple's typedstream format. Based on https://github.com/dgelessus/python-typedstream",
+	"name": "typedstream",
+	"description": "A TypeScript parser for Apple's typedstream/NSArchiver binary format",
 	"author": {
-		"name": "Elliot Nash",
-		"email": "elliotnash@gmail.com"
+		"name": "qwerzl",
+		"email": "me@qwerzl.me"
 	},
-	"version": "1.4.1",
+	"version": "2.0.0",
 	"type": "module",
 	"license": "MIT",
 	"devDependencies": {
