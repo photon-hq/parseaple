@@ -1,179 +1,89 @@
-# bplist
+# @parseaple/bplist
 
-Binary Mac OS X Plist (property list) parser for Node.js.
+A TypeScript parser for Apple's binary property list (bplist) format.
 
-Modern TypeScript rewrite of [node-bplist-parser](https://github.com/joeferner/node-bplist-parser) with full type safety and ESM support.
+Based on [node-bplist-parser](https://github.com/joeferner/node-bplist-parser) by Joe Ferner.
 
-## Features
+Many thanks to Joe Ferner for the original implementation.
 
-- ✨ **Modern TypeScript** - Full type definitions included
-- 🚀 **ESM First** - Native ES Module support
-- 🔒 **Type Safe** - Comprehensive TypeScript types for all plist values
-- ⚡ **Fast** - Efficient binary parsing
-- 📦 **Zero Dependencies** - No external runtime dependencies
+[![npm version](https://img.shields.io/npm/v/@parseaple/bplist)](https://www.npmjs.com/package/@parseaple/bplist)
+[![license](https://img.shields.io/npm/l/@parseaple/bplist)](./LICENSE)
+
+## What is bplist?
+
+Binary property list (bplist) is a compact binary serialization format used by Apple for storing structured data. It's commonly found in macOS and iOS system files, application preferences, `Info.plist` files, and various other configuration files. Binary plists are more efficient than their XML counterparts and support additional data types like dates, binary data, and UID references.
 
 ## Installation
 
-```bash
-npm install bplist
-# or
-pnpm add bplist
-# or
-yarn add bplist
+```
+npm install @parseaple/bplist
 ```
 
 ## Usage
 
-### Basic Example
+### Parse a file
 
-```typescript
-import * as bplist from 'bplist';
+```js
+import * as bplist from "@parseaple/bplist";
 
-// Parse from file (async)
-const [data] = await bplist.parseFile('myPlist.bplist');
+const [data] = await bplist.parseFile("Info.plist");
 console.log(data);
+```
 
-// Parse from file (sync)
-const [data] = bplist.parseFileSync('myPlist.bplist');
+### Parse synchronously
+
+```js
+import * as bplist from "@parseaple/bplist";
+
+const [data] = bplist.parseFileSync("Info.plist");
 console.log(data);
+```
 
-// Parse from buffer
-const buffer = Buffer.from(/* ... */);
+### Parse from buffer
+
+```js
+import * as bplist from "@parseaple/bplist";
+import { readFileSync } from "node:fs";
+
+const buffer = readFileSync("myPlist.bplist");
 const [data] = bplist.parseBuffer(buffer);
 console.log(data);
 ```
 
-### With TypeScript
+### Legacy callback style
 
-```typescript
-import { parseFile, type UID } from 'bplist';
+```js
+import { parseFile } from "@parseaple/bplist";
 
-const [plist] = await parseFile('Info.plist');
-
-// TypeScript knows the possible types
-if (typeof plist === 'object' && plist !== null && !Array.isArray(plist)) {
-  const bundleId = plist['CFBundleIdentifier'];
-  console.log('Bundle ID:', bundleId);
-}
-```
-
-### Callback Style (Legacy)
-
-```typescript
-import { parseFile } from 'bplist';
-
-parseFile('myPlist.bplist', (err, data) => {
-  if (err) {
-    console.error('Error:', err);
-    return;
-  }
+parseFile("myPlist.bplist", (err, data) => {
+  if (err) throw err;
   console.log(data);
 });
 ```
 
-## API
+## Supported types
 
-### `parseFile(fileNameOrBuffer, callback?)`
+The library supports all standard binary plist types:
 
-Parse a binary plist file or buffer asynchronously.
+- Null (`null`)
+- Boolean (`true`, `false`)
+- Integer (including 64-bit `bigint`)
+- Real (floating-point numbers)
+- Date (`Date` objects)
+- Data (`Buffer` objects)
+- ASCII String and UTF-16 String (`string`)
+- UID (represented as `{ UID: number }`)
+- Array (`Array`)
+- Dictionary (`Object`)
 
-**Parameters:**
-- `fileNameOrBuffer` - File path (string) or Buffer
-- `callback` - Optional callback function `(err, result) => void`
+## Development
 
-**Returns:** `Promise<PlistValue[]>`
-
-### `parseFileSync(fileNameOrBuffer)`
-
-Parse a binary plist file or buffer synchronously.
-
-**Parameters:**
-- `fileNameOrBuffer` - File path (string) or Buffer
-
-**Returns:** `PlistValue[]`
-
-### `parseBuffer(buffer)`
-
-Parse a binary plist buffer.
-
-**Parameters:**
-- `buffer` - Buffer containing binary plist data
-
-**Returns:** `PlistValue[]`
-
-### Types
-
-The parser returns values that can be:
-- `null`
-- `boolean`
-- `number`
-- `bigint` (for 64-bit integers)
-- `string`
-- `Date`
-- `Buffer` (for binary data)
-- `UID` (for UID objects)
-- `Array<PlistValue>`
-- `{ [key: string]: PlistValue }`
-
-### UID Class
-
-Binary plists can contain UID references. These are represented as:
-
-```typescript
-class UID {
-  UID: number;
-  constructor(id: number);
-}
 ```
-
-Example:
-```typescript
-const [plist] = await parseFile('archived.plist');
-// plist might contain: { $top: { root: { UID: 1 } } }
+bun install
+bun run build
+bun run test
 ```
-
-## Configuration
-
-You can adjust memory limits if needed:
-
-```typescript
-import { maxObjectSize, maxObjectCount } from 'bplist';
-
-// Adjust limits (use with caution)
-maxObjectSize = 200 * 1000 * 1000; // 200MB
-maxObjectCount = 65536; // Max number of objects
-```
-
-## Original Authors
-
-- **Joe Ferner** - Original bplist-parser implementation
-- **Brett Zamir** - Contributor
-
-## Modernization
-
-- **qwerzl** - TypeScript rewrite and modernization
 
 ## License
 
-MIT License
-
-Copyright (c) 2012 Near Infinity Corporation
-
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+MIT

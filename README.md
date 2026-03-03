@@ -6,7 +6,8 @@ A collection of TypeScript libraries for parsing Apple's binary formats.
 
 | Package | Description |
 |---|---|
-| [typedstream](./packages/typedstream) | Parser for Apple's typedstream/NSArchiver binary format |
+| [@parseaple/typedstream](./packages/typedstream) | Parser for Apple's typedstream/NSArchiver binary format |
+| [@parseaple/bplist](./packages/bplist) | Binary plist parser for Node.js |
 
 ## Development
 
