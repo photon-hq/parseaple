@@ -6,6 +6,7 @@ Based on [node-bplist-parser](https://github.com/joeferner/node-bplist-parser) b
 
 Many thanks to Joe Ferner for the original implementation.
 
+[![CI](https://github.com/photon-ai/parseaple/workflows/CI/badge.svg)](https://github.com/photon-ai/parseaple/actions)
 [![npm version](https://img.shields.io/npm/v/@parseaple/bplist)](https://www.npmjs.com/package/@parseaple/bplist)
 [![license](https://img.shields.io/npm/l/@parseaple/bplist)](./LICENSE)
 

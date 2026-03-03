@@ -447,9 +447,13 @@ export class Unarchiver {
 			if (rootGroup instanceof TypedValue) {
 				return rootGroup.value;
 			}
-			throw new EvalError(
-				`Archive's root value is a group of ${rootGroup.values.length} values (expected exactly one root value)`,
-			);
+			if (rootGroup instanceof TypedGroup) {
+				throw new EvalError(
+					`Archive's root value is a group of ${rootGroup.values.length} values (expected exactly one root value)`,
+				);
+			}
+			// For bplist data, return the root value directly
+			return rootGroup;
 		}
 	}
 }

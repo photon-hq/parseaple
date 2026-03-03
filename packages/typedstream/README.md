@@ -1,4 +1,4 @@
-# typedstream
+# @parseaple/typedstream
 
 A TypeScript parser for Apple's typedstream/NSArchiver binary format.
 
@@ -6,8 +6,9 @@ Based on [node-typedstream](https://github.com/BlueBubblesApp/node-typedstream) 
 
 Many thanks to Elliot Nash, this package is largely based on their prior effort in [node-typedstream](https://github.com/BlueBubblesApp/node-typedstream).
 
-[![npm version](https://img.shields.io/npm/v/typedstream)](https://www.npmjs.com/package/typedstream)
-[![license](https://img.shields.io/npm/l/typedstream)](./LICENSE)
+[![CI](https://github.com/photon-ai/parseaple/workflows/CI/badge.svg)](https://github.com/photon-ai/parseaple/actions)
+[![npm version](https://img.shields.io/npm/v/@parseaple/typedstream)](https://www.npmjs.com/package/@parseaple/typedstream)
+[![license](https://img.shields.io/npm/l/@parseaple/typedstream)](./LICENSE)
 
 ## What is typedstream?
 
@@ -16,7 +17,7 @@ Many thanks to Elliot Nash, this package is largely based on their prior effort 
 ## Installation
 
 ```
-npm install typedstream
+npm install @parseaple/typedstream
 ```
 
 ## Usage
@@ -24,7 +25,7 @@ npm install typedstream
 ### Decode a single root object
 
 ```js
-import { Unarchiver } from "typedstream";
+import { Unarchiver } from "@parseaple/typedstream";
 import { readFileSync } from "node:fs";
 
 const data = readFileSync("path/to/file.clr");
@@ -35,7 +36,7 @@ console.log(root);
 ### Decode all root values
 
 ```js
-import { Unarchiver } from "typedstream";
+import { Unarchiver } from "@parseaple/typedstream";
 import { readFileSync } from "node:fs";
 
 const data = readFileSync("path/to/archive");
@@ -46,7 +47,7 @@ console.log(values);
 ### Low-level stream reading
 
 ```js
-import { TypedStreamReader } from "typedstream";
+import { TypedStreamReader } from "@parseaple/typedstream";
 import { readFileSync } from "node:fs";
 
 const data = readFileSync("path/to/archive");
