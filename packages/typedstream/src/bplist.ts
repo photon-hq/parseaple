@@ -1,12 +1,15 @@
-import bPlistParser from "bplist-parser";
+import { parseBuffer, UID } from "bplist";
 import { TypedGroup, Unarchiver } from "./archiver";
 
 type BPlistValue =
 	| string
 	| number
+	| bigint
 	| boolean
 	| null
+	| Date
 	| Buffer
+	| UID
 	| TypedGroup
 	| BPlistValue[]
 	| { [key: string]: BPlistValue };
@@ -73,7 +76,7 @@ export class BPlistReader {
 		return data;
 	}
 	read() {
-		const data = bPlistParser.parseBuffer(this.data);
+		const data = parseBuffer(this.data);
 		this.process(data);
 		return data;
 	}
