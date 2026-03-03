@@ -1,5 +1,5 @@
 {
-	"name": "typedstream",
+	"name": "@parseaple/typedstream",
 	"description": "A TypeScript parser for Apple's typedstream/NSArchiver binary format",
 	"author": {
 		"name": "qwerzl",
@@ -13,14 +13,14 @@
 		"test": "vitest run",
 		"test:watch": "vitest"
 	},
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
+	"main": "dist/index.mjs",
+	"types": "dist/index.d.mts",
 	"files": [
 		"dist",
 		"README.md"
 	],
 	"dependencies": {
-		"bplist-parser": "^0.3.2"
+		"@parseaple/bplist": "workspace:*"
 	},
 	"devDependencies": {
 		"tsdown": "^0.21.0-beta.2",
