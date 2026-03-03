@@ -1,8 +1,11 @@
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { TypedGroup, Unarchiver } from "../src/archiver";
 import { NSString } from "../src/types/foundation";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // Archived NSString("string value") — from the upstream Python test suite
 const STRING_DATA = Buffer.from(
@@ -10,7 +13,7 @@ const STRING_DATA = Buffer.from(
 	"binary",
 );
 
-const FIXTURES = join(import.meta.dirname, "fixtures");
+const FIXTURES = join(__dirname, "fixtures");
 
 describe("Unarchiver", () => {
 	it("throws on an invalid buffer", () => {
