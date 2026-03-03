@@ -1,4 +1,4 @@
-import { parseBuffer, UID } from "bplist";
+import { parseBuffer, type UID } from "@parseaple/bplist";
 import { TypedGroup, Unarchiver } from "./archiver";
 
 type BPlistValue =
