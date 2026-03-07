@@ -1,0 +1,23 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  release:
+    uses: photon-hq/buildspace/.github/workflows/typescript-monorepo-release.yaml@main
+    permissions:
+      contents: write
+      pull-requests: read
+    with:
+      service-name: parseaple
+      packages: |
+        [
+          {"name":"@parseaple/bplist","path":"packages/bplist"},
+          {"name":"@parseaple/typedstream","path":"packages/typedstream"}
+        ]
+      include-dependents: true
+    secrets:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
