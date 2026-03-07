@@ -1,49 +1,49 @@
 {
-	"name": "@parseaple/bplist",
-	"description": "Binary plist parser for Node.js",
-	"author": {
-		"name": "qwerzl",
-		"email": "me@qwerzl.me"
-	},
-	"version": "1.0.0",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/photon-ai/parseaple.git",
-		"directory": "packages/bplist"
-	},
-	"homepage": "https://github.com/photon-ai/parseaple/tree/main/packages/bplist#readme",
-	"bugs": {
-		"url": "https://github.com/photon-ai/parseaple/issues"
-	},
-	"type": "module",
-	"license": "MIT",
-	"scripts": {
-		"build": "tsdown",
-		"test": "vitest run",
-		"test:watch": "vitest"
-	},
-	"main": "dist/index.mjs",
-	"types": "dist/index.d.mts",
-	"files": [
-		"dist",
-		"README.md",
-		"CHANGELOG.md"
-	],
-	"publishConfig": {
-		"access": "public"
-	},
-	"keywords": [
-		"bplist",
-		"plist",
-		"parser",
-		"binary",
-		"apple"
-	],
-	"engines": {
-		"node": ">= 18.0.0"
-	},
-	"devDependencies": {
-		"tsdown": "^0.21.0-beta.2",
-		"vitest": "^4.0.18"
-	}
+  "name": "@parseaple/bplist",
+  "description": "Binary plist parser for Node.js",
+  "author": {
+    "name": "qwerzl",
+    "email": "me@qwerzl.me"
+  },
+  "version": "1.0.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/photon-ai/parseaple.git",
+    "directory": "packages/bplist"
+  },
+  "homepage": "https://github.com/photon-ai/parseaple/tree/main/packages/bplist#readme",
+  "bugs": {
+    "url": "https://github.com/photon-ai/parseaple/issues"
+  },
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsdown",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "main": "dist/index.mjs",
+  "types": "dist/index.d.mts",
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "bplist",
+    "plist",
+    "parser",
+    "binary",
+    "apple"
+  ],
+  "engines": {
+    "node": ">= 18.0.0"
+  },
+  "devDependencies": {
+    "tsdown": "^0.21.0-beta.2",
+    "vitest": "^4.0.18"
+  }
 }

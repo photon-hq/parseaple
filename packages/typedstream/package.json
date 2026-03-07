@@ -1,42 +1,42 @@
 {
-	"name": "@parseaple/typedstream",
-	"description": "A TypeScript parser for Apple's typedstream/NSArchiver binary format",
-	"author": {
-		"name": "qwerzl",
-		"email": "me@qwerzl.me"
-	},
-	"version": "2.0.0",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/photon-ai/parseaple.git",
-		"directory": "packages/typedstream"
-	},
-	"homepage": "https://github.com/photon-ai/parseaple/tree/main/packages/typedstream#readme",
-	"bugs": {
-		"url": "https://github.com/photon-ai/parseaple/issues"
-	},
-	"type": "module",
-	"license": "MIT",
-	"scripts": {
-		"build": "tsdown",
-		"test": "vitest run",
-		"test:watch": "vitest"
-	},
-	"main": "dist/index.mjs",
-	"types": "dist/index.d.mts",
-	"files": [
-		"dist",
-		"README.md",
-		"CHANGELOG.md"
-	],
-	"publishConfig": {
-		"access": "public"
-	},
-	"dependencies": {
-		"@parseaple/bplist": "workspace:*"
-	},
-	"devDependencies": {
-		"tsdown": "^0.21.0-beta.2",
-		"vitest": "^4.0.18"
-	}
+  "name": "@parseaple/typedstream",
+  "description": "A TypeScript parser for Apple's typedstream/NSArchiver binary format",
+  "author": {
+    "name": "qwerzl",
+    "email": "me@qwerzl.me"
+  },
+  "version": "2.0.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/photon-ai/parseaple.git",
+    "directory": "packages/typedstream"
+  },
+  "homepage": "https://github.com/photon-ai/parseaple/tree/main/packages/typedstream#readme",
+  "bugs": {
+    "url": "https://github.com/photon-ai/parseaple/issues"
+  },
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsdown",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "main": "dist/index.mjs",
+  "types": "dist/index.d.mts",
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@parseaple/bplist": "workspace:*"
+  },
+  "devDependencies": {
+    "tsdown": "^0.21.0-beta.2",
+    "vitest": "^4.0.18"
+  }
 }
