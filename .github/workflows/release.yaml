@@ -18,6 +18,7 @@ jobs:
           {"name":"@parseaple/typedstream","path":"packages/typedstream"}
         ]
       include-dependents: true
+      use-blacksmith: true
     secrets:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
