@@ -6,6 +6,8 @@ const debug = false;
 
 export let maxObjectSize = 100 * 1000 * 1000; // 100Meg
 export let maxObjectCount = 32768;
+export let maxArrayLength = 1000000; // 1M elements - prevent unbounded array allocation
+export let maxRecursionDepth = 1000; // prevent stack exhaustion from deeply nested structures
 
 // EPOCH = new SimpleDateFormat("yyyy MM dd zzz").parse("2001 01 01 GMT").getTime();
 // ...but that's annoying in a static initializer because it can throw exceptions, ick.
@@ -85,6 +87,11 @@ export const parseBuffer = (buffer: Buffer): PlistValue[] => {
 		throw new Error("Invalid binary plist. Expected 'bplist' at offset 0.");
 	}
 
+	// Minimum buffer length to contain a valid trailer (32 bytes)
+	if (buffer.length < 32) {
+		throw new Error("Buffer too small to contain a valid binary plist trailer");
+	}
+
 	// Handle trailer, last 32 bytes of the file
 	const trailer = buffer.subarray(buffer.length - 32, buffer.length);
 	// 6 null bytes (index 0 to 5)
@@ -133,36 +140,46 @@ export const parseBuffer = (buffer: Buffer): PlistValue[] => {
 	// For the format specification check
 	// <a href="https://www.opensource.apple.com/source/CF/CF-635/CFBinaryPList.c">
 	// Apple's binary property list parser implementation</a>.
+	let recursionDepth = 0;
 	const parseObject = (tableOffset: number): PlistValue => {
-		const offset = offsetTable[tableOffset];
-		const type = buffer[offset];
-		const objType = (type & 0xf0) >> 4; //First  4 bits
-		const objInfo = type & 0x0f; //Second 4 bits
-
-		switch (objType) {
-			case 0x0:
-				return parseSimple();
-			case 0x1:
-				return parseInteger();
-			case 0x8:
-				return parseUID();
-			case 0x2:
-				return parseReal();
-			case 0x3:
-				return parseDate();
-			case 0x4:
-				return parseData();
-			case 0x5: // ASCII
-				return parsePlistString();
-			case 0x6: // UTF-16
-				return parsePlistString(true);
-			case 0xa:
-				return parseArray();
-			case 0xd:
-				return parseDictionary();
-			default:
-				throw new Error(`Unhandled type 0x${objType.toString(16)}`);
+		if (recursionDepth >= maxRecursionDepth) {
+			throw new Error(`Maximum recursion depth (${maxRecursionDepth}) exceeded`);
 		}
+		recursionDepth++;
+		try {
+			const offset = offsetTable[tableOffset];
+			// Validate offset is within bounds
+			if (offset < 0 || offset >= buffer.length) {
+				throw new Error(`Object offset ${offset} out of bounds`);
+			}
+			const type = buffer[offset];
+			const objType = (type & 0xf0) >> 4; //First  4 bits
+			const objInfo = type & 0x0f; //Second 4 bits
+
+			switch (objType) {
+				case 0x0:
+					return parseSimple();
+				case 0x1:
+					return parseInteger();
+				case 0x8:
+					return parseUID();
+				case 0x2:
+					return parseReal();
+				case 0x3:
+					return parseDate();
+				case 0x4:
+					return parseData();
+				case 0x5: // ASCII
+					return parsePlistString();
+				case 0x6: // UTF-16
+					return parsePlistString(true);
+				case 0xa:
+					return parseArray();
+				case 0xd:
+					return parseDictionary();
+				default:
+					throw new Error(`Unhandled type 0x${objType.toString(16)}`);
+			}
 
 		function parseSimple(): PlistValue {
 			//Simple
@@ -315,6 +332,10 @@ export const parseBuffer = (buffer: Buffer): PlistValue[] => {
 				arrayoffset = 2 + intLength;
 				length = readUInt(buffer.subarray(offset + 2, offset + 2 + intLength));
 			}
+			// Limit array element count to prevent unbounded allocation
+			if (length > maxArrayLength) {
+				throw new Error(`Array length ${length} exceeds maximum allowed (${maxArrayLength})`);
+			}
 			if (length * objectRefSize > maxObjectSize) {
 				throw new Error("Too little heap space available!");
 			}
@@ -351,7 +372,8 @@ export const parseBuffer = (buffer: Buffer): PlistValue[] => {
 			if (debug) {
 				console.log(`Parsing dictionary #${tableOffset}`);
 			}
-			const dict: { [key: string]: PlistValue } = {};
+			// Use Object.create(null) to prevent prototype pollution via __proto__ keys
+			const dict: { [key: string]: PlistValue } = Object.create(null);
 			for (let i = 0; i < length; i++) {
 				const keyRef = readUInt(
 					buffer.subarray(
@@ -370,11 +392,17 @@ export const parseBuffer = (buffer: Buffer): PlistValue[] => {
 				if (debug) {
 					console.log(`  DICT #${tableOffset}: Mapped ${key} to ${val}`);
 				}
-				dict[key as string] = val;
+				// Ensure key is a string and not a prototype-polluting value
+				if (typeof key === "string") {
+					dict[key] = val;
+				}
 			}
 			return dict;
 		}
-	};
+	} finally {
+		recursionDepth--;
+	}
+};
 
 	return [parseObject(topObject)];
 };
