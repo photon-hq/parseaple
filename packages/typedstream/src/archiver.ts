@@ -17,6 +17,7 @@ import {
 	EndObject,
 	EndStruct,
 	EndTypedValues,
+	InvalidTypedStreamError,
 	ObjectReference,
 	Selector,
 	SingleClass,
@@ -140,10 +141,7 @@ export class Unarchiver {
 		try {
 			return new Unarchiver(new TypedStreamReader(data), binaryDecoding);
 		} catch (e: unknown) {
-			if (
-				e instanceof Error &&
-				e.constructor.name === "InvalidTypedStreamError"
-			) {
+			if (e instanceof InvalidTypedStreamError) {
 				return new Unarchiver(new BPlistReader(data), binaryDecoding);
 			}
 			throw e;

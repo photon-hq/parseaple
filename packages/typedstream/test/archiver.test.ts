@@ -3,6 +3,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { TypedGroup, Unarchiver } from "../src/archiver";
+import { InvalidTypedStreamError } from "../src/stream";
 import { NSString } from "../src/types/foundation";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -18,6 +19,21 @@ const FIXTURES = join(__dirname, "fixtures");
 describe("Unarchiver", () => {
 	it("throws on an invalid buffer", () => {
 		expect(() => Unarchiver.open(Buffer.from("garbage"))).not.toThrow(); // opens as bplist fallback
+	});
+
+	it("falls back to bplist when bundling renames the error class", () => {
+		// Minifiers and bundlers may rename classes, so the check must not depend on the class name.
+		const original = Object.getOwnPropertyDescriptor(
+			InvalidTypedStreamError,
+			"name",
+		);
+		Object.defineProperty(InvalidTypedStreamError, "name", { value: "a" });
+		try {
+			expect(() => Unarchiver.open(Buffer.from("garbage"))).not.toThrow();
+		} finally {
+			if (original)
+				Object.defineProperty(InvalidTypedStreamError, "name", original);
+		}
 	});
 
 	describe("decodeSingleRoot", () => {

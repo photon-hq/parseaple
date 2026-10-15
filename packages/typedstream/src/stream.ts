@@ -67,7 +67,7 @@ function decodeReferenceNumber(encoded: number): number {
 /**
  * Raised by :class:`TypedStreamReader` if the typedstream data is invalid or doesn't match the expected structure.
  */
-class InvalidTypedStreamError extends Error {}
+export class InvalidTypedStreamError extends Error {}
 
 class EOFError extends Error {}
 
