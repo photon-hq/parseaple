@@ -16,7 +16,7 @@
     "url": "https://github.com/photon-ai/parseaple/issues"
   },
   "type": "module",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "scripts": {
     "build": "tsdown",
     "test": "vitest run",
