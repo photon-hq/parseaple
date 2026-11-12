@@ -31,4 +31,4 @@ bun run test
 
 ## License
 
-MIT
+Apache-2.0
